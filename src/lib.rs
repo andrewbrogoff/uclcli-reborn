@@ -607,6 +607,23 @@ mod tests {
     fn ucl_error_kind_from_unknown_code() {
         assert_eq!(UclErrorKind::from(-999), UclErrorKind::UnknownError(-999));
     }
+
+    #[test]
+    fn ucl_error_kind_display() {
+        assert_eq!(format!("{}", UclErrorKind::InvalidArgument), "invalid argument");
+        assert_eq!(format!("{}", UclErrorKind::OutOfMemory), "out of memory");
+        assert_eq!(format!("{}", UclErrorKind::NotCompressible), "not compressible");
+        assert_eq!(format!("{}", UclErrorKind::InputOverrun), "input overrun");
+        assert_eq!(format!("{}", UclErrorKind::OutputOverrun), "output overrun");
+        assert_eq!(format!("{}", UclErrorKind::LookbehindOverrun), "look-behind overrun");
+        assert_eq!(format!("{}", UclErrorKind::EofNotFound), "EOF not found");
+        assert_eq!(format!("{}", UclErrorKind::InputNotConsumed), "input not consumed");
+        assert_eq!(format!("{}", UclErrorKind::OverlapOverrun), "overlap overrun");
+        assert_eq!(format!("{}", UclErrorKind::SrcTooLarge), "src buffer too large");
+        assert_eq!(format!("{}", UclErrorKind::DstTooLarge), "dst buffer too large");
+        assert_eq!(format!("{}", UclErrorKind::DstTooSmall), "dst buffer too small");
+        assert_eq!(format!("{}", UclErrorKind::UnknownError(-42)), "unknown UCL error: -42");
+    }
 }
 
 #[cfg(test)]

@@ -30,6 +30,10 @@ use uclcli::{decompress, decompress_into_buffer, ucl_init};
 /// Maximum allowed input size (2GB) to prevent memory exhaustion attacks (DoS).
 const MAX_INPUT_SIZE: u64 = 2 * 1024 * 1024 * 1024;
 
+/// Maximum allowed buffer size (1GB) to prevent resource exhaustion.
+/// This matches the MAX_DST_CAPACITY in the library.
+const MAX_BUFFER_SIZE: u32 = 1_073_741_824;
+
 /// Default decompression buffer size (512MB).
 /// This is a reasonable default for most use cases. Users can override this
 /// with the --buffersize flag if they know the expected decompressed size.
@@ -60,6 +64,14 @@ fn main() -> Result<()> {
 
     let buffer_size = args.buffersize.unwrap_or(DEFAULT_BUFFER_SIZE);
 
+    if buffer_size > MAX_BUFFER_SIZE {
+        anyhow::bail!(
+            "buffer size {} exceeds maximum allowed {} bytes",
+            buffer_size,
+            MAX_BUFFER_SIZE
+        );
+    }
+
     let input: Box<dyn Read> = match &args.input {
         Some(path) => Box::new(
             OpenOptions::new()
@@ -71,10 +83,17 @@ fn main() -> Result<()> {
     };
 
     let mut inbuffer = Vec::new();
-    input
-        .take(MAX_INPUT_SIZE)
+    let bytes_read = input
+        .take(MAX_INPUT_SIZE + 1)
         .read_to_end(&mut inbuffer)
         .context("failed to read input")?;
+
+    if bytes_read as u64 > MAX_INPUT_SIZE {
+        anyhow::bail!(
+            "input size exceeds maximum supported {} bytes",
+            MAX_INPUT_SIZE
+        );
+    }
 
     match &args.output {
         Some(path) => {

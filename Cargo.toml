@@ -9,6 +9,9 @@ repository = "https://github.com/andrewbrogoff/uclcli-reborn/"
 license = "GPL-3.0-or-later"
 links = "ucl"
 
+[dev-dependencies]
+tempfile = "3"
+
 [lib]
 name = "uclcli"
 

@@ -59,10 +59,17 @@ fn main() -> Result<()> {
     };
 
     let mut inbuffer = Vec::new();
-    input
-        .take(MAX_INPUT_SIZE)
+    let bytes_read = input
+        .take(MAX_INPUT_SIZE + 1)
         .read_to_end(&mut inbuffer)
         .context("failed to read input")?;
+
+    if bytes_read as u64 > MAX_INPUT_SIZE {
+        anyhow::bail!(
+            "input size exceeds maximum supported {} bytes",
+            MAX_INPUT_SIZE
+        );
+    }
 
     let out_size = minimum_compression_buffer_size(inbuffer.len());
 
