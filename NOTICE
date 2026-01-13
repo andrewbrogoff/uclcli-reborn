@@ -1,0 +1,56 @@
+uclcli reborn - Copyright and License Notice
+=============================================
+
+This project is a fork of the original uclcli project.
+
+ORIGINAL WORK
+-------------
+  Repository: https://github.com/afflux/uclcli
+  Author:     Kjell Braden <kjell.braden@bmw.de>
+  Copyright:  (C) 2020-2021 BMW Group
+  License:    GNU General Public License v3.0 or later (GPL-3.0-or-later)
+
+FORK MAINTAINER
+---------------
+  Maintainer: Andrew Rogoff <andrew@andrewbrogoff.com>
+  Copyright:  (C) 2026-present Andrew Rogoff
+  License:    GNU General Public License v3.0 or later (GPL-3.0-or-later)
+
+MODIFICATIONS
+-------------
+As required by Section 5(a) of the GNU General Public License v3, this notice
+states that this version has been modified from the original work. The modifications
+include but are not limited to:
+  - Enhanced error handling and safety improvements
+  - Updated build system and dependencies
+  - Addition of fuzzing targets for testing
+  - Documentation improvements
+  - Code modernization and refactoring
+
+LICENSE
+-------
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program in the COPYING file. If not, see <https://www.gnu.org/licenses/>.
+
+THIRD-PARTY COMPONENTS
+----------------------
+This software links against libucl (UCL compression library), which has its own
+licensing terms. Please refer to the libucl documentation for its license
+information.
+
+SOURCE CODE AVAILABILITY
+------------------------
+The complete corresponding source code for this program is available at:
+  https://github.com/andrewbrogoff/uclcli-reborn/
+
+For questions about this software or its licensing, please contact:
+  Andrew Rogoff <andrew@andrewbrogoff.com>
