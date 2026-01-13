@@ -6,7 +6,7 @@ Command-line compression and decompression utilities using the UCL/NRV compressi
 
 ## Requirements
 
-- **Rust 1.85+** (edition 2024)
+- **Rust 1.91+** (edition 2024)
 - **libucl 1.03** - The UCL compression library
 
 ## Platform-Specific Build Guides
