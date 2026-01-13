@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::fmt;
 use std::mem;
 use std::ptr;
 use std::sync::OnceLock;
@@ -110,34 +111,42 @@ pub fn ucl_init() {
     );
 }
 
-#[derive(Error, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Error, Debug, PartialEq, Eq, Clone)]
 pub enum UclErrorKind {
-    #[error("generic UCL error")]
-    GenericError,
-    #[error("invalid argument")]
     InvalidArgument,
-    #[error("out of memory")]
     OutOfMemory,
-    #[error("not compressible")]
     NotCompressible,
-    #[error("input overrun")]
     InputOverrun,
-    #[error("output overrun")]
     OutputOverrun,
-    #[error("look-behind overrun")]
     LookbehindOverrun,
-    #[error("EOF not found")]
     EofNotFound,
-    #[error("input not consumed")]
     InputNotConsumed,
-    #[error("overlap overrun")]
     OverlapOverrun,
-    #[error("src buffer too large")]
     SrcTooLarge,
-    #[error("dst buffer too large")]
     DstTooLarge,
-    #[error("dst buffer too small")]
     DstTooSmall,
+    UnknownError(i32),
+}
+
+impl fmt::Display for UclErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let description = match *self {
+            UclErrorKind::InvalidArgument => "invalid argument",
+            UclErrorKind::OutOfMemory => "out of memory",
+            UclErrorKind::NotCompressible => "not compressible",
+            UclErrorKind::InputOverrun => "input overrun",
+            UclErrorKind::OutputOverrun => "output overrun",
+            UclErrorKind::LookbehindOverrun => "look-behind overrun",
+            UclErrorKind::EofNotFound => "EOF not found",
+            UclErrorKind::InputNotConsumed => "input not consumed",
+            UclErrorKind::OverlapOverrun => "overlap overrun",
+            UclErrorKind::SrcTooLarge => "src buffer too large",
+            UclErrorKind::DstTooLarge => "dst buffer too large",
+            UclErrorKind::DstTooSmall => "dst buffer too small",
+            UclErrorKind::UnknownError(code) => return write!(f, "unknown UCL error: {}", code),
+        };
+        write!(f, "{}", description)
+    }
 }
 
 impl UclErrorKind {
@@ -152,7 +161,7 @@ impl UclErrorKind {
             -204 => UclErrorKind::EofNotFound,
             -205 => UclErrorKind::InputNotConsumed,
             -206 => UclErrorKind::OverlapOverrun,
-            _ => UclErrorKind::GenericError,
+            other => UclErrorKind::UnknownError(other),
         }
     }
 }
@@ -376,10 +385,11 @@ pub fn compress_into_buffer(src: &[u8], dst: &mut [u8]) -> std::result::Result<u
 /// assert_eq!(uclcli::compress(&src).unwrap(), b"\x92\x00\xaa\xa1\x00\x00\x00\x00\x00\x04\x80\xff");
 /// ```
 pub fn compress(src: &[u8]) -> std::result::Result<Vec<u8>, UclErrorKind> {
+    let _src_len = to_u32_src_len(src.len())?;
     let capacity = minimum_compression_buffer_size(src.len());
-    let mut dst = Vec::with_capacity(capacity);
-
     let dst_len = to_u32_dst_len(capacity)?;
+
+    let mut dst = Vec::with_capacity(capacity);
 
     // SAFETY: We've allocated `capacity` bytes, which equals
     // minimum_compression_buffer_size(src.len()). After successful
@@ -393,7 +403,10 @@ pub fn compress(src: &[u8]) -> std::result::Result<Vec<u8>, UclErrorKind> {
 
 #[cfg(test)]
 mod tests {
-    use super::{compress_into_buffer, decompress, decompress_into_buffer, ucl_init, UclErrorKind};
+    use super::{
+        compress, compress_into_buffer, decompress, decompress_into_buffer, ucl_init,
+        UclErrorKind, MAX_DST_CAPACITY,
+    };
 
     #[test]
     fn compress_buffer_nothing() {
@@ -499,8 +512,6 @@ mod tests {
     }
 
     // Integration tests for round-trip compression/decompression
-    use super::compress;
-
     #[test]
     fn round_trip_empty() {
         ucl_init();
@@ -560,4 +571,43 @@ mod tests {
         let decompressed = decompress(&compressed, original.len() as u32).unwrap();
         assert_eq!(original, decompressed);
     }
+
+    #[test]
+    fn decompress_dst_capacity_too_large() {
+        ucl_init();
+        let compressed = b"\x92\x00\xaa\xa1\x00\x00\x00\x00\x00\x04\x80\xff";
+        let dst_capacity = MAX_DST_CAPACITY + 1;
+        assert_eq!(
+            decompress(compressed, dst_capacity).unwrap_err(),
+            UclErrorKind::DstTooLarge
+        );
+    }
+
+    #[test]
+    fn compress_src_too_large() {
+        ucl_init();
+        let input = vec![0u8; 5 * 1024 * 1024 * 1024];
+        assert_eq!(compress(&input).unwrap_err(), UclErrorKind::SrcTooLarge);
+    }
+
+    #[test]
+    fn ucl_error_kind_from_known_codes() {
+        assert_eq!(UclErrorKind::from(-2), UclErrorKind::InvalidArgument);
+        assert_eq!(UclErrorKind::from(-3), UclErrorKind::OutOfMemory);
+        assert_eq!(UclErrorKind::from(-101), UclErrorKind::NotCompressible);
+        assert_eq!(UclErrorKind::from(-201), UclErrorKind::InputOverrun);
+        assert_eq!(UclErrorKind::from(-202), UclErrorKind::OutputOverrun);
+        assert_eq!(UclErrorKind::from(-203), UclErrorKind::LookbehindOverrun);
+        assert_eq!(UclErrorKind::from(-204), UclErrorKind::EofNotFound);
+        assert_eq!(UclErrorKind::from(-205), UclErrorKind::InputNotConsumed);
+        assert_eq!(UclErrorKind::from(-206), UclErrorKind::OverlapOverrun);
+    }
+
+    #[test]
+    fn ucl_error_kind_from_unknown_code() {
+        assert_eq!(UclErrorKind::from(-999), UclErrorKind::UnknownError(-999));
+    }
 }
+
+#[cfg(test)]
+mod conversion_test;
