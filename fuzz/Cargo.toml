@@ -2,18 +2,17 @@
 [package]
 name = "uclcli-fuzz"
 version = "0.0.0"
-authors = ["Automatically generated"]
+authors = ["Andrew Rogoff <andrew@andrewbrogoff.com>"]
 publish = false
-edition = "2018"
+edition = "2024"
+license = "GPL-3.0-or-later"
 
 [package.metadata]
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = "0.3"
-
-[dependencies.uclcli]
-path = ".."
+libfuzzer-sys = "0.4"
+uclcli = { package = "uclcli-reborn", path = ".." }
 
 # Prevent this from interfering with workspaces
 [workspace]
